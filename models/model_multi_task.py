@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 Author: Christoforos Brozos
 The python script is developed to train a GNN for multi-task CMC and Γm predictions. 
