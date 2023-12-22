@@ -4,7 +4,7 @@ This is the source code for the paper:
 ![Graphical abstract](Graphical_abstract.png)
 
 # Data
-The test data set used in this work is provided open-source. The rest data can be made available upon request.
+The test data set used in this work is provided open-source. The training data can be made available upon request.
 
 # Code
 * **model_single_task**: Python code for single-task model training.
