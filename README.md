@@ -1,7 +1,7 @@
 # Graph Neural Networks for Surfactant Multi-Property Prediction
 This is the source code for the paper:
 # Graphical abstract 
-![Graph Name](Graphical abstract.png)
+(Graphical abstract.png)
 
 # Data
 The test data set used in this work is provided open-source. The rest data can be made available upon request.
