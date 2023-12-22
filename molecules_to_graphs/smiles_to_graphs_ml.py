@@ -1,7 +1,4 @@
-# -*- coding: utf-8 -*-
 """
-Created on Sun Apr 23 16:29:18 2023
-
 @author: BrozosCh
 """
 import os
