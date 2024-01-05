@@ -1,5 +1,5 @@
 # Graph Neural Networks for Surfactant Multi-Property Prediction
-This is the source code for the paper: [website (https://arxiv.org/abs/2401.01874)] 
+This is the source code for the paper: [Graph Neural Networks for Surfactant Multi-Property Prediction](https://arxiv.org/abs/2401.01874)
 # Graphical abstract 
 ![Graphical abstract](Graphical_abstract.png)
 
