@@ -97,8 +97,8 @@ class GNN_CMC(torch.nn.Module):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Load the task's corresponding dataset
 
-dataset = OwnDataset(root = r"C:\Users\BrozosCh\OneDrive - BASF\Desktop\PhD related files\Project CMC\Final_datasets\CMC_surf_ML\Similar_split\Property\Train")
-ext_test_dataset = OwnDataset(root = r"C:\Users\BrozosCh\OneDrive - BASF\Desktop\PhD related files\Project CMC\Final_datasets\CMC_surf_ML\Similar_split\Property\Test")
+dataset = OwnDataset(root = r"")
+ext_test_dataset = OwnDataset(root = r"")
 
 
 
@@ -284,7 +284,7 @@ def write_predictions(loader, model, save_path, dataset_type,counter):
         return mae_errors
 
 # User defined path for model saving and loading
-save_path = str('C:\\Users\\BrozosCh\\OneDrive - BASF\\Desktop\\GNN_CMC\\code_myproject\\Results_cmc\\')
+save_path = str('')
 
 
 def save_checkpoint(model,filename):    
