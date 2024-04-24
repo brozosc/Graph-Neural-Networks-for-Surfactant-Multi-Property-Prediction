@@ -79,8 +79,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Load the task's corresponding dataset
 
 
-dataset = OwnDataset(root = r"C:\Users\BrozosCh\OneDrive - BASF\Desktop\PhD related files\Project CMC\Final_datasets\CMC_sl\Random_split\Property\Train")
-ext_test_dataset = OwnDataset(root = r"C:\Users\BrozosCh\OneDrive - BASF\Desktop\PhD related files\Project CMC\Final_datasets\CMC_sl\Random_split\Property\Test")
+dataset = OwnDataset(root = "")
+ext_test_dataset = OwnDataset(root = "")
 
     
 # Normalize the target property to mean=0 and std =1    
@@ -206,7 +206,7 @@ def write_predictions(loader, model, save_path, dataset_type,counter):
         
 
 #User defined path for model saving and loading
-save_path = str('C:\\Users\\BrozosCh\\OneDrive - BASF\\Desktop\\GNN_CMC\\code_myproject\\Results_gama_sl\\')
+save_path = str('')
 
 def save_checkpoint(model,filename):
     print('Saving checkpoint') 
