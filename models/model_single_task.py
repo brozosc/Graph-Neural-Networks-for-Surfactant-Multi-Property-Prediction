@@ -96,7 +96,7 @@ print('Training is based on ' + str(dataset.num_features) + ' atom features and 
 # Split the training dataset into training and validation sets. The split is different in every reputation based on the seed
 # to ensure model robustness. The test dataset remains always the same
 
-def data_preparation(seed):
+def data_preparation(seed,dataset = dataset):
     torch.manual_seed(seed)
     dataset = dataset.shuffle()
     val_dataset = dataset[:20]
