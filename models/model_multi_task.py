@@ -121,7 +121,7 @@ print('Model parameters: ' + str(sum(p.numel() for p in GNN_CMC().parameters()))
 # to ensure model robustness. The test dataset remains always the same
 
 
-def data_preparation(seed):
+def data_preparation(seed,dataset = dataset):
     torch.manual_seed(seed)
     dataset = dataset.shuffle()
     val_dataset = dataset[:20]
