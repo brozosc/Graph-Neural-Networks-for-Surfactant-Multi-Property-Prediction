@@ -123,7 +123,7 @@ print('Model parameters: ' + str(sum(p.numel() for p in GNN_CMC().parameters()))
 
 def data_preparation(seed):
     torch.manual_seed(seed)
-    dataset.shuffle()
+    dataset = dataset.shuffle()
     val_dataset = dataset[:20]
     train_dataset = dataset[20:]
     train_loader = DataLoader(train_dataset, batch_size = batch, shuffle = True)
