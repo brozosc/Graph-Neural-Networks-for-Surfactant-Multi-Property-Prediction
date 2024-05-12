@@ -3,7 +3,6 @@
 Author: Christoforos Brozos
 The python script is developed to train a GNN for CMC or/ Γm predictions. 
 The architecture used here was found to be the optimum through hyperparameter tuning.
-The script allows user to train different model initiated on different splits.
 """
 
 from smiles_to_graphs import OwnDataset
@@ -47,7 +46,6 @@ class GNN_CMC(torch.nn.Module):
     def __init__(self):
         super(GNN_CMC, self).__init__()      
         self.lin0 = Linear(dataset.num_features, dim)
-        
         self.gru = GRU(dim,dim)
         
         edge_nn = Sequential(Linear(dataset.num_edge_features, dim), ReLU(), Linear(dim, dim * dim))
@@ -78,11 +76,9 @@ class GNN_CMC(torch.nn.Module):
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Load the task's corresponding dataset
 
-
 dataset = OwnDataset(root = "")
 ext_test_dataset = OwnDataset(root = "")
-
-    
+  
 # Normalize the target property to mean=0 and std =1    
 mean = torch.as_tensor(dataset.data.y, dtype=torch.float).mean()
 std = torch.as_tensor(dataset.data.y, dtype=torch.float).std()
@@ -91,10 +87,9 @@ ext_test_dataset.data.y = (ext_test_dataset.data.y - mean) / std
 print('Model parameters: ' + str(sum(p.numel() for p in GNN_CMC().parameters())))
 print('Target data mean: ' + str(mean.tolist()))
 print('Target data standard deviation: ' + str(std.tolist()))
-print('Training is based on ' + str(dataset.num_features) + ' atom features and ' + str(dataset.num_edge_features) + ' edge features for a molecule.')
 
 # Split the training dataset into training and validation sets. The split is different in every reputation based on the seed
-# to ensure model robustness. The test dataset remains always the same
+# to ensure model robustness. The test dataset remains always the same.
 
 def data_preparation(seed,dataset = dataset):
     torch.manual_seed(seed)
@@ -105,8 +100,6 @@ def data_preparation(seed,dataset = dataset):
     val_loader = DataLoader(val_dataset, batch_size = len(val_dataset))
     test_loader = DataLoader(ext_test_dataset[:], batch_size = len(ext_test_dataset))
     return train_loader, val_loader, test_loader
-
-
 
 def train(loader, model, optimizer):
     model.train()
@@ -136,6 +129,7 @@ def train(loader, model, optimizer):
         abs_loss_all += abs_loss*data.num_graphs
         train_rmse = torch.sqrt(abs_loss_all/total_examples)     
         train_mae += ((out - real_data)/(real_data+mean/std)).abs().sum(0).item()
+        
      #We report only de-normalized errors   
     return loss_all / len(loader.dataset), train_rmse.item(), train_mae/ len(loader.dataset)
 
@@ -144,6 +138,7 @@ def test(loader, model, optimizer):
     val_mae, val_rmse = 0, 0
     loss_all_norm = norm_val_mae = abs_loss_all = 0 
     loss_all = total_examples = 0
+    
     with torch.no_grad():
         for data in loader:
             data = data.to(device)
@@ -154,7 +149,6 @@ def test(loader, model, optimizer):
             total_examples += data.num_graphs
         
             #calculating normalized errors
-
             norm_val_rmse = torch.sqrt(loss_all/total_examples)
             norm_val_mae += (out - real_data).abs().sum(0).item()
         
@@ -169,41 +163,6 @@ def test(loader, model, optimizer):
     #We report only de-normalized errors
     return val_rmse.item(), val_mae / len(loader.dataset)
 
-# Write predictions on the given dataset in an Excel file, together with the corresponding Smiles string. The results are been printed in an Excel File.
-
-def write_predictions(loader, model, save_path, dataset_type,counter):
-    model = model
-    model.load_state_dict(torch.load(save_path+'base_model_{}.pt'.format(counter)))
-    model.eval()
-    smiles, predicted, measured = [],[],[]
-    df_exp = pd.DataFrame()
-    mol_id, pred, real_value, mol_names, pred_list, = None, None, None, [], []
-    for data in loader:
-        mol_id = data.mol_id.tolist()
-        for mol in mol_id:
-            tmp_mol_name = ''
-            for i in mol:
-                if int(i) is not 0:
-                    tmp_mol_name += chr(int(i))
-            mol_names.append(tmp_mol_name)           
-        real_value = data.y.tolist()
-        data = data.to(device)
-        pred = model(data).tolist()
-    
-        for c, k in enumerate(pred):
-            pred_list.append([mol_names[c], (pred[c][0]*std +mean).item(), (real_value[c][0]*std + mean).item()])
-        mol_names = []  
-     #   pred_list.sort()
-        for k in pred_list:
-            smiles.append(k[0])
-            predicted.append(k[1])
-            measured.append(k[2])
-            
-        df_exp['SMILES'] = smiles
-        df_exp['Predicted'] = predicted
-        df_exp['Measured'] = measured
-        df_exp.to_excel(str(save_path)+str(dataset_type)+'_base_model_{}.xlsx'.format(counter), index = False)
-        
 
 #User defined path for model saving and loading
 save_path = str('')
@@ -230,7 +189,6 @@ def training(counter):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, factor=lrfactor, patience=lrpatience, min_lr=0.0000001)
      
-
     for epoch in range(1,epochs + 1):
         lr = scheduler.optimizer.param_groups[0]['lr']
         loss, train_rmse, train_mae = train(train_loader, model, optimizer)
@@ -244,7 +202,6 @@ def training(counter):
         train_errors.append(train_rmse)
         val_errors.append(val_rmse)
         test_errors.append(test_rmse)
-        
         
         
         if best_val_rmse is None:
@@ -266,11 +223,7 @@ def training(counter):
     'Best model with respect to validation error in epoch {:03d} with \nVal RMSE {:.5f}\nTest RMSE {:.5f}\n'
     .format(best_epoch, best_val_rmse, best_epoch_test_rmse))  
     
-    
-    # Optional, the prediction of the test set can be returned as an excel file.
-  #  write_predictions(test_loader,model, save_path, 'test', counter = counter)
- 
-   
+
     if plot is True:
          plt.plot(range(1,len(train_errors)+1), train_errors, label = 'Train')
          plt.plot(range(1,len(val_errors)+1), val_errors, label = 'Validation')
@@ -283,43 +236,12 @@ def training(counter):
          plt.show()
     else:
         pass
-    return loss, val_rmse, val_mae, test_rmse, test_mae, best_val_rmse, best_epoch_test_rmse, best_val_mae, best_epoch_test_mae
-
-# In this section, we define the number of runs we wish (40 during our work) and append the parameters to corresponding lists. 
-val_rmse_40, test_rmse_40  = [], []
-val_mae_40, test_mae_40 = [], []
-best_val_rmse_40, best_epoch_test_rmse_40 = [], []
-best_val_mae_40, best_epoch_test_mae_40 = [], []
-
-def control_fun():
-    for i in range(1, 2):
-        out = training(i)
-        test_rmse_40.append(out[3]) 
-        test_mae_40.append(out[4])
-        val_rmse_40.append(out[1])
-        val_mae_40.append(out[2])
-        best_val_rmse_40.append(out[5])
-        best_epoch_test_rmse_40.append(out[6])
-        best_val_mae_40.append(out[7])
-        best_epoch_test_mae_40.append(out[8])
-        print('Seed number ' + str(i))
+    return loss, best_val_rmse, best_epoch_test_rmse, best_val_mae, best_epoch_test_mae
 
 
-control_fun()
+single_seed_results = training(1)
+validation_set_rmse = single_seed_results[1]
+validation_set_mae = single_seed_results[3]
+test_set_rmse = single_seed_results[2]
+test_set_mae = single_seed_results[4]
 
-
-#Optionally the results are saved in a dataframe. 
-
-df = pd.DataFrame()
-df['val_rmse_40'] = val_rmse_40
-df['val_mae_40'] =  val_mae_40
-df['test_rmse_40'] = test_rmse_40
-df['test_mae_40'] = test_mae_40
-df['best_val_rmse_40'] = best_val_rmse_40
-df['best_epoch_test_rmse_40'] = best_epoch_test_rmse_40
-df['best_val_mae_40'] = best_val_mae_40
-df['best_epoch_test_mae_40'] = best_epoch_test_mae_40
-df['Learning_rate'] = lrate
-df['Batch_size'] = batch
-df.loc['mean'] = df.mean()
-#df.to_excel('.xlsx')
