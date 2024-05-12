@@ -3,7 +3,6 @@
 Author: Christoforos Brozos
 The python script is developed to train a GNN for multi-task CMC and Γm predictions. 
 The architecture used here was found to be the optimum through hyperparameter tuning.
-The script allows user to train different model initiated on different splits.
 """
 
 from smiles_to_graphs_ml import OwnDataset
@@ -31,7 +30,6 @@ parser.add_argument('--early_stopping_patience', default=50)   # number of epoch
 parser.add_argument('--lrfactor', default=0.8)   # decreasing factor for learning rate
 parser.add_argument('--lrpatience', default=3)   # number of consecutive epochs without model improvement after which learning rate is decreased
 
-
 args = parser.parse_args()
 task = args.task
 plot = args.plot
@@ -43,8 +41,6 @@ lrfactor = float(args.lrfactor)
 lrpatience = int(args.lrpatience)
 early_stopping_patience = int(args.early_stopping_patience)
 
-
-# Define the model geometry. We import flexibility to the code, so that it adapts based on the user's input
 
 class GNN_CMC(torch.nn.Module):
     def __init__(self):
@@ -75,8 +71,7 @@ class GNN_CMC(torch.nn.Module):
         x = F.relu(self.conv1(x, edge_index, edge_attr))
       
         x,h = self.gru(x.unsqueeze(0),h)
-        x = x.squeeze(0)
-                    
+        x = x.squeeze(0)            
                        
         x_forward = x
 
@@ -100,8 +95,6 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 dataset = OwnDataset(root = r"")
 ext_test_dataset = OwnDataset(root = r"")
 
-
-
 mean_lst = []
 std_lst = []
 
@@ -120,7 +113,6 @@ print('Model parameters: ' + str(sum(p.numel() for p in GNN_CMC().parameters()))
 # Split the training dataset into training and validation sets. The split is different in every reputation based on the seed
 # to ensure model robustness. The test dataset remains always the same
 
-
 def data_preparation(seed,dataset = dataset):
     torch.manual_seed(seed)
     dataset = dataset.shuffle()
@@ -130,7 +122,6 @@ def data_preparation(seed,dataset = dataset):
     val_loader = DataLoader(val_dataset, batch_size = len(val_dataset))
     test_loader = DataLoader(ext_test_dataset[:], batch_size = len(ext_test_dataset))
     return train_loader, val_loader, test_loader
-
 
 
 def train(loader, model, optimizer):
@@ -241,51 +232,9 @@ def test(loader, model, optimizer):
     
     return total_val_error.item(), val_rmse_0.item(), mae_loss0/total_samples_0, val_rmse_1.item(), mae_loss1/total_samples_1
 
-# Write predictions on the given dataset in an Excel file, together with the corresponding Smiles string. The results are been printed in an Excel File.
 
-def write_predictions(loader, model, save_path, dataset_type,counter):
-    model = model
-    model.load_state_dict(torch.load(save_path+'base_model_{}.pt'.format(counter)))
-    model.eval()
-    smiles, measured_0, measured_1, predicted_0, predicted_1 = [],[],[],[], []
-    df_exp = pd.DataFrame()
-    mol_id, pred, real_value, mol_names, pred_list, rmse_errors, mae_errors = None, None, None, [], [], [], []
-    for data in loader:
-        mol_id = data.mol_id.tolist()
-        for mol in mol_id:
-            tmp_mol_name = ''
-            for i in mol:
-                if int(i) is not 0:
-                    tmp_mol_name += chr(int(i))
-            mol_names.append(tmp_mol_name)           
-
-        real_value_0 = data.y[:,0].tolist()
-        real_value_1 = data.y[:,1].tolist()
-        data = data.to(device)
-        pred = model(data).tolist()
-           
-        for c, k in enumerate(pred):
-            pred_list.append([mol_names[c],(real_value_0[c]*std[0] + mean[0]).item(),(real_value_1[c]*std[1] + mean[1]).item(), (k[0]*std[0] + mean[0]).item(), (k[1]*std[1] + mean[1]).item()])
-        mol_names = []  
-
-        for k in pred_list:
-            smiles.append(k[0])
-            measured_0.append(k[1])
-            measured_1.append(k[2])
-            predicted_0.append(k[3])
-            predicted_1.append(k[4])
-            
-        df_exp['SMILES'] = smiles
-        df_exp['Predicted_0'] = predicted_0
-        df_exp['Measured_0'] = measured_0
-        df_exp['Predicted_1'] = predicted_1
-        df_exp['Measured_1'] = measured_1
-        df_exp.to_excel(str(save_path)+str(dataset_type)+'_base_model_{}.xlsx'.format(counter), index = False)
-        return mae_errors
-
-# User defined path for model saving and loading
+# User defined path for model saving
 save_path = str('')
-
 
 def save_checkpoint(model,filename):    
     print('Saving checkpoint')
@@ -334,8 +283,7 @@ def training(counter):
         train_errors_1.append(train_rmse_1)
         val_errors_1.append(val_rmse_1)
         test_errors_1.append(test_rmse_1)
-        
-        
+                
         
         if best_val_rmse_0 is None:
             best_epoch = epoch
@@ -360,9 +308,6 @@ def training(counter):
     'Best model with respect to validation error in epoch {:03d} with \nVal0 RMSE {:.5f}, Test0 RMSE {:.5f}, Val1 RMSE {:.5f} Test1 RMSE {:.5f}'
     .format(best_epoch, best_val_rmse_0, best_epoch_test_rmse_0, best_val_rmse_1, best_epoch_test_rmse_1))  
     
-
-   # write_predictions(test_loader,model, save_path, 'test', counter = counter)
- 
    
     if plot is True:
          plt.title('Total Loss')
@@ -375,7 +320,6 @@ def training(counter):
          plt.legend(frameon=False)
          plt.tight_layout()
          plt.show()
-         
          
          plt.title('Property 1')
          plt.plot(range(1,len(train_errors_0)+1), train_errors_0, label = 'Train')
@@ -400,53 +344,14 @@ def training(counter):
          plt.show()
     else:
         pass
-    return loss, val_rmse_0, val_mae_0, test_rmse_0, test_mae_0, best_val_rmse_0, best_epoch_test_rmse_0, best_val_mae_0, best_epoch_test_mae_0, best_val_rmse_1, best_epoch_test_rmse_1, best_val_mae_1, best_epoch_test_mae_1
+    return loss, best_val_rmse_0, best_epoch_test_rmse_0, best_val_mae_0, best_epoch_test_mae_0, best_val_rmse_1, best_epoch_test_rmse_1, best_val_mae_1, best_epoch_test_mae_1
 
-val_rmse_40_0, test_rmse_40_0  = [], []
-val_mae_40_0, test_mae_40_0 = [], []
-best_val_rmse_40_0, best_epoch_test_rmse_40_0 = [], []
-best_val_mae_40_0, best_epoch_test_mae_40_0 = [], []
-best_val_rmse_40_1, best_epoch_test_rmse_40_1 = [], []
-best_val_mae_40_1, best_epoch_test_mae_40_1 = [], []
-
-
-def control_fun():
-    for i in range(1, 2):
-        out = training(i)
-        test_rmse_40_0.append(out[3]) 
-        test_mae_40_0.append(out[4])
-        val_rmse_40_0.append(out[1])
-        val_mae_40_0.append(out[2])
-        best_val_rmse_40_0.append(out[5])
-        best_epoch_test_rmse_40_0.append(out[6])
-        best_val_mae_40_0.append(out[7])
-        best_epoch_test_mae_40_0.append(out[8])
-        best_val_rmse_40_1.append(out[9])
-        best_epoch_test_rmse_40_1.append(out[10])
-        best_val_mae_40_1.append(out[11])
-        best_epoch_test_mae_40_1.append(out[12])
-        print('Seed number ' + str(i))
-
-
-control_fun()
-
-#Optionally the results are saved in a dataframe. 
-
-
-df = pd.DataFrame()
-df['val_rmse_40_0'] = val_rmse_40_0
-df['val_mae_40_0'] =  val_mae_40_0
-df['test_rmse_40_0'] = test_rmse_40_0
-df['test_mae_40_0'] = test_mae_40_0
-df['best_val_rmse_40_0'] = best_val_rmse_40_0
-df['best_epoch_test_rmse_40_0'] = best_epoch_test_rmse_40_0
-df['best_val_mae_40_0'] = best_val_mae_40_0
-df['best_epoch_test_mae_40_0'] = best_epoch_test_mae_40_0
-df['best_val_rmse_40_1'] = best_val_rmse_40_1
-df['best_epoch_test_rmse_40_1'] = best_epoch_test_rmse_40_1
-df['best_val_mae_40_1'] = best_val_mae_40_1
-df['best_epoch_test_mae_40_1'] = best_epoch_test_mae_40_1
-df['Learning_rate'] = lrate
-df['Batch_size'] = batch
-df.loc['mean'] = df.mean()
-#df.to_excel('.xlsx')
+single_seed_results = training(1)
+validation_set_rmse_0 = single_seed_results[1]
+validation_set_mae_0 = single_seed_results[3]
+test_set_rmse_0 = single_seed_results[2]
+test_set_mae_0 = single_seed_results[4]
+validation_set_rmse_1 = single_seed_results[5]
+validation_set_mae_1 = single_seed_results[7]
+test_set_rmse_1 = single_seed_results[6]
+test_set_mae_1 = single_seed_results[8]
